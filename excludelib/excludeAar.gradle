@@ -1,0 +1,186 @@
+configurations {
+    exclude
+}
+
+//需要排除的包名
+def excludePackages = []
+//需要排除的类(需要全类名)
+
+//class 可以使用正则匹配获取  gradle全部替换即可实现   第一行   "Duplicate class (.*) found in modules(.*?)\\n" \+    第二行 '$1',
+
+def excludeClasses = ['tv.danmaku.ijk.media.player.AbstractMediaPlayer',
+                      'tv.danmaku.ijk.media.player.AndroidMediaPlayer',
+                      'tv.danmaku.ijk.media.player.AndroidMediaPlayer$AndroidMediaPlayerListenerHolder',
+                      'tv.danmaku.ijk.media.player.AndroidMediaPlayer$MediaDataSourceProxy',
+                      'tv.danmaku.ijk.media.player.IMediaPlayer',
+                      'tv.danmaku.ijk.media.player.IMediaPlayer$OnBufferingUpdateListener',
+                      'tv.danmaku.ijk.media.player.IMediaPlayer$OnCompletionListener',
+                      'tv.danmaku.ijk.media.player.IMediaPlayer$OnErrorListener',
+                      'tv.danmaku.ijk.media.player.IMediaPlayer$OnInfoListener',
+                      'tv.danmaku.ijk.media.player.IMediaPlayer$OnPreparedListener',
+                      'tv.danmaku.ijk.media.player.IMediaPlayer$OnSeekCompleteListener',
+                      'tv.danmaku.ijk.media.player.IMediaPlayer$OnVideoSizeChangedListener',
+                      'tv.danmaku.ijk.media.player.ISurfaceTextureHolder',
+                      'tv.danmaku.ijk.media.player.ISurfaceTextureHost',
+                      'tv.danmaku.ijk.media.player.IjkLibLoader',
+                      'tv.danmaku.ijk.media.player.IjkMediaCodecInfo',
+                      'tv.danmaku.ijk.media.player.IjkMediaMeta',
+                      'tv.danmaku.ijk.media.player.IjkMediaMeta$IjkStreamMeta',
+                      'tv.danmaku.ijk.media.player.IjkMediaPlayer',
+                      'tv.danmaku.ijk.media.player.IjkMediaPlayer$1',
+                      'tv.danmaku.ijk.media.player.IjkMediaPlayer$DefaultMediaCodecSelector',
+                      'tv.danmaku.ijk.media.player.IjkMediaPlayer$EventHandler',
+                      'tv.danmaku.ijk.media.player.IjkMediaPlayer$OnControlMessageListener',
+                      'tv.danmaku.ijk.media.player.IjkMediaPlayer$OnMediaCodecSelectListener',
+                      'tv.danmaku.ijk.media.player.IjkMediaPlayer$OnNativeInvokeListener',
+                      'tv.danmaku.ijk.media.player.MediaInfo',
+                      'tv.danmaku.ijk.media.player.MediaPlayerProxy',
+                      'tv.danmaku.ijk.media.player.MediaPlayerProxy$1',
+                      'tv.danmaku.ijk.media.player.MediaPlayerProxy$2',
+                      'tv.danmaku.ijk.media.player.MediaPlayerProxy$3',
+                      'tv.danmaku.ijk.media.player.MediaPlayerProxy$4',
+                      'tv.danmaku.ijk.media.player.MediaPlayerProxy$5',
+                      'tv.danmaku.ijk.media.player.MediaPlayerProxy$6',
+                      'tv.danmaku.ijk.media.player.MediaPlayerProxy$7',
+                      'tv.danmaku.ijk.media.player.MediaPlayerProxy$8',
+                      'tv.danmaku.ijk.media.player.TextureMediaPlayer',
+                      'tv.danmaku.ijk.media.player.annotations.AccessedByNative',
+                      'tv.danmaku.ijk.media.player.annotations.CalledByNative',
+                      'tv.danmaku.ijk.media.player.exceptions.IjkMediaException',
+                      'tv.danmaku.ijk.media.player.misc.AndroidMediaFormat',
+                      'tv.danmaku.ijk.media.player.misc.AndroidTrackInfo',
+                      'tv.danmaku.ijk.media.player.misc.IMediaDataSource',
+                      'tv.danmaku.ijk.media.player.misc.IMediaFormat',
+                      'tv.danmaku.ijk.media.player.misc.ITrackInfo',
+                      'tv.danmaku.ijk.media.player.misc.IjkMediaFormat',
+                      'tv.danmaku.ijk.media.player.misc.IjkMediaFormat$1',
+                      'tv.danmaku.ijk.media.player.misc.IjkMediaFormat$2',
+                      'tv.danmaku.ijk.media.player.misc.IjkMediaFormat$3',
+                      'tv.danmaku.ijk.media.player.misc.IjkMediaFormat$4',
+                      'tv.danmaku.ijk.media.player.misc.IjkMediaFormat$5',
+                      'tv.danmaku.ijk.media.player.misc.IjkMediaFormat$6',
+                      'tv.danmaku.ijk.media.player.misc.IjkMediaFormat$7',
+                      'tv.danmaku.ijk.media.player.misc.IjkMediaFormat$8',
+                      'tv.danmaku.ijk.media.player.misc.IjkMediaFormat$9',
+                      'tv.danmaku.ijk.media.player.misc.IjkMediaFormat$Formatter',
+                      'tv.danmaku.ijk.media.player.misc.IjkTrackInfo',
+                      'tv.danmaku.ijk.media.player.pragma.DebugLog',
+                      'tv.danmaku.ijk.media.player.pragma.Pragma']
+//需要好排除的so库
+def excludeSos = []
+
+
+def unZipAarFile = new File(buildDir, "unzipaar")
+def unZipJarFile = new File(buildDir, 'unzipjar')
+def excludeAarFile = new File(buildDir, "excludeaar")
+def excludeAarName = "exclude_${getDefaultAar().name.replaceFirst(~/\.[^.]+$/, '')}"
+
+//1、获取到需要过滤的原始AAR包
+def getDefaultAar() {
+    Configuration c = configurations.getByName("exclude")
+    def files = c.artifacts.files.filter {
+        it.name ==~ /.*\.aar/
+    }
+
+    def file = null
+    if (!files.empty) {
+        file = files[0]
+    }
+    return file
+}
+
+task deleteDir(type: Delete) {
+    delete unZipAarFile, unZipJarFile, excludeAarFile
+    println "删除缓存目录 end"
+}
+
+task replaceJar(type: org.gradle.api.tasks.Delete) {
+
+}
+
+//2、解压AAR包（zipTree配合Task Copy）
+task unZipAar(type: Copy) {
+    deleteDir.doLast {
+        def zipFile = getDefaultAar()
+        def outputDir = unZipAarFile
+        from zipTree(zipFile)
+        into outputDir
+
+        println "解压aar end"
+    }
+}
+unZipAar.dependsOn deleteDir
+
+//3、解压AAR包中的class.jar（zipTree配合Task Copy）
+task unzipJar(type: Copy) {
+    deleteDir.doLast {
+        def zipFile = new File(unZipAarFile, 'classes.jar')
+        def outputDir = unZipJarFile
+        from zipTree(zipFile)
+        into outputDir
+
+        println "解压classes.jar end"
+    }
+}
+
+unzipJar.dependsOn unZipAar
+
+//4、按照过滤规则对解压的class.jar重新打包(Task Jar)
+task zipJar(type: Jar) {
+    deleteDir.doLast {
+        baseName = 'classes'
+        from unZipJarFile
+        destinationDir unZipAarFile
+        exclude getExcludePackageRegex(excludePackages)
+        exclude getExcludeClassRegex(excludeClasses)
+
+        println "重新打包classes.jar end"
+        println "排除的包：" + getExcludePackageRegex(excludePackages)
+        println "排除的类：" + getExcludeClassRegex(excludeClasses)
+    }
+}
+
+zipJar.dependsOn unzipJar
+
+//5、重新打包成AAR包(Task Zip)
+task excludeAar(type: Zip) {
+    group 'ex'
+    description '生成一个排除之后的aar包'
+
+    deleteDir.doLast {
+        baseName excludeAarName
+        extension "aar"
+        from unZipAarFile
+        destinationDir excludeAarFile
+        exclude getExcludeSoRegex(excludeSos)
+
+        println "重新打包aar end"
+    }
+}
+
+excludeAar.dependsOn zipJar
+
+artifacts {
+    exclude excludeAar
+}
+
+
+static def getExcludePackageRegex(def packages) {
+    packages?.collect {
+        it?.replace('.', '\\')?.plus("\\**")
+    }
+}
+
+static def getExcludeClassRegex(def classes) {
+    classes?.collect {
+        it?.replace('.', '\\')?.plus(".class")
+    }
+
+
+}
+
+static def getExcludeSoRegex(def sos) {
+    sos?.collect {
+        "**\\${it}.so"
+    }
+}

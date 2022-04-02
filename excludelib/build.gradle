@@ -1,0 +1,8 @@
+configurations.maybeCreate("exclude")
+//需要排除的aar或者jar。（替换成需要排除的）
+artifacts.add("exclude", file('libs/exampleAAR.aar'))
+artifacts.add("exclude", file('libs/ExampleJAR.jar'))
+//去除aar
+apply from: "${project.projectDir.absoluteFile}\\excludeAar.gradle"
+//去除jar
+apply from: "${project.projectDir.absoluteFile}\\excludeJar.gradle"

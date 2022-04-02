@@ -1,0 +1,139 @@
+configurations {
+    exclude
+}
+
+//需要排除的包名
+def excludePackages = []
+//需要排除的类(需要全类名)
+def excludeClasses = ['tv.danmaku.ijk.media.player.AbstractMediaPlayer',
+                      'tv.danmaku.ijk.media.player.AndroidMediaPlayer',
+                      'tv.danmaku.ijk.media.player.AndroidMediaPlayer$AndroidMediaPlayerListenerHolder',
+                      'tv.danmaku.ijk.media.player.AndroidMediaPlayer$MediaDataSourceProxy',
+                      'tv.danmaku.ijk.media.player.IMediaPlayer',
+                      'tv.danmaku.ijk.media.player.IMediaPlayer$OnBufferingUpdateListener',
+                      'tv.danmaku.ijk.media.player.IMediaPlayer$OnCompletionListener',
+                      'tv.danmaku.ijk.media.player.IMediaPlayer$OnErrorListener',
+                      'tv.danmaku.ijk.media.player.IMediaPlayer$OnInfoListener',
+                      'tv.danmaku.ijk.media.player.IMediaPlayer$OnPreparedListener',
+                      'tv.danmaku.ijk.media.player.IMediaPlayer$OnSeekCompleteListener',
+                      'tv.danmaku.ijk.media.player.IMediaPlayer$OnVideoSizeChangedListener',
+                      'tv.danmaku.ijk.media.player.ISurfaceTextureHolder',
+                      'tv.danmaku.ijk.media.player.ISurfaceTextureHost',
+                      'tv.danmaku.ijk.media.player.IjkLibLoader',
+                      'tv.danmaku.ijk.media.player.IjkMediaCodecInfo',
+                      'tv.danmaku.ijk.media.player.IjkMediaMeta',
+                      'tv.danmaku.ijk.media.player.IjkMediaMeta$IjkStreamMeta',
+                      'tv.danmaku.ijk.media.player.IjkMediaPlayer',
+                      'tv.danmaku.ijk.media.player.IjkMediaPlayer$1',
+                      'tv.danmaku.ijk.media.player.IjkMediaPlayer$DefaultMediaCodecSelector',
+                      'tv.danmaku.ijk.media.player.IjkMediaPlayer$EventHandler',
+                      'tv.danmaku.ijk.media.player.IjkMediaPlayer$OnControlMessageListener',
+                      'tv.danmaku.ijk.media.player.IjkMediaPlayer$OnMediaCodecSelectListener',
+                      'tv.danmaku.ijk.media.player.IjkMediaPlayer$OnNativeInvokeListener',
+                      'tv.danmaku.ijk.media.player.MediaInfo',
+                      'tv.danmaku.ijk.media.player.MediaPlayerProxy',
+                      'tv.danmaku.ijk.media.player.MediaPlayerProxy$1',
+                      'tv.danmaku.ijk.media.player.MediaPlayerProxy$2',
+                      'tv.danmaku.ijk.media.player.MediaPlayerProxy$3',
+                      'tv.danmaku.ijk.media.player.MediaPlayerProxy$4',
+                      'tv.danmaku.ijk.media.player.MediaPlayerProxy$5',
+                      'tv.danmaku.ijk.media.player.MediaPlayerProxy$6',
+                      'tv.danmaku.ijk.media.player.MediaPlayerProxy$7',
+                      'tv.danmaku.ijk.media.player.MediaPlayerProxy$8',
+                      'tv.danmaku.ijk.media.player.TextureMediaPlayer',
+                      'tv.danmaku.ijk.media.player.annotations.AccessedByNative',
+                      'tv.danmaku.ijk.media.player.annotations.CalledByNative',
+                      'tv.danmaku.ijk.media.player.exceptions.IjkMediaException',
+                      'tv.danmaku.ijk.media.player.misc.AndroidMediaFormat',
+                      'tv.danmaku.ijk.media.player.misc.AndroidTrackInfo',
+                      'tv.danmaku.ijk.media.player.misc.IMediaDataSource',
+                      'tv.danmaku.ijk.media.player.misc.IMediaFormat',
+                      'tv.danmaku.ijk.media.player.misc.ITrackInfo',
+                      'tv.danmaku.ijk.media.player.misc.IjkMediaFormat',
+                      'tv.danmaku.ijk.media.player.misc.IjkMediaFormat$1',
+                      'tv.danmaku.ijk.media.player.misc.IjkMediaFormat$2',
+                      'tv.danmaku.ijk.media.player.misc.IjkMediaFormat$3',
+                      'tv.danmaku.ijk.media.player.misc.IjkMediaFormat$4',
+                      'tv.danmaku.ijk.media.player.misc.IjkMediaFormat$5',
+                      'tv.danmaku.ijk.media.player.misc.IjkMediaFormat$6',
+                      'tv.danmaku.ijk.media.player.misc.IjkMediaFormat$7',
+                      'tv.danmaku.ijk.media.player.misc.IjkMediaFormat$8',
+                      'tv.danmaku.ijk.media.player.misc.IjkMediaFormat$9',
+                      'tv.danmaku.ijk.media.player.misc.IjkMediaFormat$Formatter',
+                      'tv.danmaku.ijk.media.player.misc.IjkTrackInfo',
+                      'tv.danmaku.ijk.media.player.pragma.DebugLog',
+                      'tv.danmaku.ijk.media.player.pragma.Pragma']
+
+
+def unZipJarFile = new File(buildDir, 'unzipjar')
+def excludeJarFile = new File(buildDir, "excludejar")
+def excludeJarName = "exclude_${getDefaultJar().name.replaceFirst(~/\.[^.]+$/, '')}"
+
+//1、获取到需要过滤的原始jar包
+def getDefaultJar() {
+    Configuration c = configurations.getByName("exclude")
+    def files = c.artifacts.files.filter {
+        it.name ==~ /.*\.jar/
+    }
+
+    def file = null
+    if (!files.empty) {
+        file = files[0]
+    }
+    return file
+}
+
+task deleteSDir(type: Delete) {
+    delete unZipJarFile, excludeJarFile
+    println "删除缓存目录 end"
+}
+
+//2、解压jar包（zipTree配合Task Copy）
+task unZipSJar(type: Copy) {
+    deleteSDir.doLast {
+        def zipFile = getDefaultJar()
+        def outputDir = unZipJarFile
+        from zipTree(zipFile)
+        into outputDir
+
+        println "解压jar end"
+    }
+}
+unZipSJar.dependsOn deleteSDir
+
+//3、按照过滤规则对解压的jar重新打包(Task Jar)
+task excludeJar(type: Jar) {
+    group 'ex'
+    description '生成一个排除之后的jar包'
+
+    deleteSDir.doLast {
+        baseName = excludeJarName
+        from unZipJarFile
+        destinationDir excludeJarFile
+        exclude getExcludePackageRegex(excludePackages)
+        exclude getExcludeClassRegex(excludeClasses)
+
+        println "重新打包jar end"
+        println "排除的包：" +getExcludePackageRegex(excludePackages)
+        println "排除的类：" + getExcludeClassRegex(excludeClasses)
+    }
+}
+
+excludeJar.dependsOn unZipSJar
+
+artifacts {
+    exclude excludeJar
+}
+
+
+static def getExcludePackageRegex(def packages) {
+    packages?.collect {
+        it?.replace('.', '\\')?.plus("\\**")
+    }
+}
+
+static def getExcludeClassRegex(def classes) {
+    classes?.collect {
+        it?.replace('.', '\\')?.plus(".class")
+    }
+}
