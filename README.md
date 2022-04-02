@@ -1,4 +1,9 @@
 # 排除AAR(Jar)包中冗余或者冲突类的gradle脚本
+Forked From  https://github.com/Siy-Wu/ExcludeAar   
+修改部分:1. 增加了so库删除   2.添加了正则,方便添加冲突的类
+
+关于第二点正则:可以直接copy AndroidStudio的冲突日志到AndroidStudio文件中  然后点开正则替换 
+就像这样  
 
 引入aar的冲突无所不在，通过远程依赖maven的包可以通过`exclude`关键字搭配`module`和`group`去除某个组，没办法去除具体的类。
 
