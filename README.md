@@ -7,8 +7,10 @@ Forked From  https://github.com/Siy-Wu/ExcludeAar
 ![changing](https://user-images.githubusercontent.com/17971243/161378317-da5a863d-25b9-4014-9dc4-04beaf00446d.png)
 ![change_after](https://user-images.githubusercontent.com/17971243/161378319-c77a5c80-37ed-4411-bfa4-05118dbed83b.png)
  这样就得到了冲突的类的列表,当然实际冲突的类可能是我十几甚至几十个.方便演示只截了这几个.
- # 正则第一行   "Duplicate class (.*) found in modules(.*?)\\n" \+    
- # 第二行 '$1',
+
+正则第一行   "Duplicate class (.*) found in modules(.*?)\\n" \+    
+第二行 '$1',
+ 
  下方为作者原文的使用说明,因为稍微有所修改,想要使用本项目的话建议直接下载.
 
 引入aar的冲突无所不在，通过远程依赖maven的包可以通过`exclude`关键字搭配`module`和`group`去除某个组，没办法去除具体的类。
